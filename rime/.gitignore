@@ -1,0 +1,8 @@
+contiki-srf06-cc26xx.a
+receive.bin
+transmit.bin
+receive.elf
+receive-srf06-cc26xx.map
+transmit.elf
+transmit-srf06-cc26xx.map
+obj_srf06-cc26xx/
