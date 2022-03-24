@@ -11,16 +11,21 @@
 #ifdef TMOTE_SKY
 #include "powertrace.h"
 #endif
-/*---------------------------------------------------------------------------*/
-// duty cycle = (2 * N_SIZE - 1) / (N_SIZE * N_SIZE)
-/*---------------------------------------------------------------------------*/
-#define TIME_SLOT RTIMER_SECOND/10
-#define N_SIZE 30
 
-static int row;
-static int col;
-static int currRow = 0;
-static int currCol = 0;
+#define TIME_SLOT RTIMER_SECOND/10
+/*---------------------------------------------------------------------------*/
+#define WAKE_TIME RTIMER_SECOND/10    // 10 HZ, 0.1s
+/*---------------------------------------------------------------------------*/
+#define SLEEP_CYCLE  9                  // 0 for never sleep
+#define SLEEP_SLOT RTIMER_SECOND/10   // sleep slot should not be too large to prevent overflow
+/*---------------------------------------------------------------------------*/
+// duty cycle = WAKE_TIME / (WAKE_TIME + SLEEP_SLOT * SLEEP_CYCLE)
+#define N 20
+
+static int activeRow;
+static int activeCol;
+static int gridRow = 0;
+static int gridCol = 0;
 /*------------------------------------0--------------------------------------*/
 // sender timer
 static struct rtimer rt;
@@ -33,6 +38,7 @@ unsigned long curr_timestamp;
 PROCESS(cc2650_nbr_discovery_process, "cc2650 neighbour discovery process");
 AUTOSTART_PROCESSES(&cc2650_nbr_discovery_process);
 /*---------------------------------------------------------------------------*/
+
 static void
 broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
@@ -72,15 +78,14 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
 
     // radio on
     NETSTACK_RADIO.on();
-    if (currRow == row || currCol == col) {
+    if (gridCol == activeCol || gridRow == activeRow ) {
       for(i = 0; i < NUM_SEND; i++) {
         leds_on(LEDS_RED);
-        
         data_packet.seq++;
         curr_timestamp = clock_time();
         data_packet.timestamp = curr_timestamp;
 
-////        printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu currRow: %d currCol: %d\n",
+//printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu currRow: %d currCol: %d\n",
 //          data_packet.seq,
 //          curr_timestamp,
 //          curr_timestamp / CLOCK_SECOND,
@@ -115,18 +120,14 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
       // the average is SLEEP_CYCLE
       //NumSleep = random_rand() % (2 * SLEEP_CYCLE + 1);
       //printf(" Sleep for %d slots \n",NumSleep);
-
-      // NumSleep should be a constant or static int
-      //for(i = 0; i < NumSleep; i++) {
-      //printf("Sleeping for %lu time\n", TIME_SLOT);
+        
       rtimer_set(t, RTIMER_TIME(t) + TIME_SLOT, 1, (rtimer_callback_t)sender_scheduler, ptr);
       PT_YIELD(&pt);
-      //}
       leds_off(LEDS_BLUE);
     }
       
-      currCol = (currCol + 1) % N_SIZE;
-      if (currCol == 0) currRow = (currRow + 1) % N_SIZE;
+      gridCol = (gridCol + 1) % N;
+      if (gridCol == 0) gridRow = (gridRow+ 1) % N;
       
   }
   
@@ -141,8 +142,8 @@ PROCESS_THREAD(cc2650_nbr_discovery_process, ev, data)
 
   random_init(54222);
 
-  row = random_rand() % N_SIZE;
-  col = random_rand() % N_SIZE;
+  activeRow = random_rand() % N;
+  activeCol = random_rand() % N;
 
   #ifdef TMOTE_SKY
   powertrace_start(CLOCK_SECOND * 5);
@@ -159,7 +160,7 @@ PROCESS_THREAD(cc2650_nbr_discovery_process, ev, data)
   printf("CC2650 neighbour discovery\n");
   printf("Node %d will be sending packet of size %d Bytes\n",
     node_id, (int)sizeof(data_packet_struct));
-  printf("N_SIZE: %d row: %d col: %d\n", N_SIZE, row, col);
+  printf("N: %d activeRow: %d activeCol: %d\n", N, activeRow, activeCol);
   // radio off
   NETSTACK_RADIO.off();
 
@@ -172,3 +173,4 @@ PROCESS_THREAD(cc2650_nbr_discovery_process, ev, data)
 
   PROCESS_END();
 }
+/*---------------------------------------------------------------------------*/
