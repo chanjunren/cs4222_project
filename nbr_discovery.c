@@ -22,8 +22,8 @@
 // duty cycle = WAKE_TIME / (WAKE_TIME + SLEEP_SLOT * SLEEP_CYCLE)
 #define N 20
 
-static int activeRow;
-static int activeCol;
+static int activeRow = 0;
+static int activeCol = 0;
 static int gridRow = 0;
 static int gridCol = 0;
 /*------------------------------------0--------------------------------------*/
