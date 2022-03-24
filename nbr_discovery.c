@@ -20,7 +20,7 @@
 #define SLEEP_SLOT RTIMER_SECOND/10   // sleep slot should not be too large to prevent overflow
 /*---------------------------------------------------------------------------*/
 // duty cycle = WAKE_TIME / (WAKE_TIME + SLEEP_SLOT * SLEEP_CYCLE)
-#define N 20
+#define N 13
 
 static int activeRow = 0;
 static int activeCol = 0;
