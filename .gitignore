@@ -1,0 +1,4 @@
+obj_srf06-cc26xx
+trace_together-srf06-cc26xx.map
+trace_together.elf
+contiki-srf06-cc26xx.a
