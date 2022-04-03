@@ -1,6 +1,7 @@
 #include "contiki.h"
 #include "dev/leds.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "core/net/rime/rime.h"
 #include "dev/serial-line.h"
 #include "dev/uart1.h"
@@ -11,6 +12,7 @@
 #ifdef TMOTE_SKY
 #include "powertrace.h"
 #endif
+
 /*---------------------------------------------------------------------------*/
 #define WAKE_TIME RTIMER_SECOND/10    // 10 HZ, 0.1s
 /*---------------------------------------------------------------------------*/
@@ -26,6 +28,82 @@ static struct pt pt;
 static data_packet_struct received_packet;
 static data_packet_struct data_packet;
 unsigned long curr_timestamp;
+
+
+/*---------------------------------------------------------------------------*/
+
+
+device_node head;
+
+#define ABSENT_LIMIT 30
+#define MIN_CONTACT 15
+
+void add_node(int id, unsigned long timestamp) {
+    device_node new_node;
+    new_node = (device_node) malloc(sizeof(struct device_info));
+    new_node->id = id;
+    new_node->first_timestamp = timestamp;
+    if (head == NULL) {
+        head = new_node;
+        return; 
+    }
+    device_node ptr = head;
+    while (ptr->next != NULL) ptr = ptr->next;
+    ptr->next = new_node;
+}
+
+void remove_node(device_node prev, device_node to_remove) {
+    // removed node is head
+    if (to_remove == head) {
+        head = head->next;
+        free(to_remove);
+        return;
+    }
+
+    // removed node is tail
+    if (to_remove->next == NULL) {
+        prev->next = NULL;
+        free(to_remove);
+        return;
+    }
+    // node to remove is in the middle of the list
+    prev->next = to_remove->next;
+    free(to_remove);
+    return;
+}
+
+void node_detected(int id, unsigned long timestamp) {
+    if (head == NULL) {
+        // First node detected
+        return add_node(id, timestamp); 
+    }
+    
+    device_node ptr = head;
+    while (ptr != NULL) {
+        // Updating last timestamp if node is currently connected
+        if (ptr->id == id) {
+            ptr->last_timestamp = timestamp;
+            return;
+        }
+        ptr = ptr->next;
+    }
+    // Node is detected for the first time
+    return add_node(id, timestamp);
+}
+
+void check_for_absence(unsigned long curr_timestamp) {
+    printf("Checking for absence...\n");
+    device_node ptr = head, prev = NULL;
+    while (ptr != NULL) {
+        if (curr_timestamp - ptr->last_timestamp > ABSENT_LIMIT) {
+            printf("%d ABSENT %d\n", node_id, ptr->id);
+            remove_node(prev, ptr);
+        }
+        prev = ptr;
+        ptr = ptr->next;
+    }
+}
+
 /*---------------------------------------------------------------------------*/
 PROCESS(cc2650_nbr_discovery_process, "cc2650 neighbour discovery process");
 AUTOSTART_PROCESSES(&cc2650_nbr_discovery_process);
@@ -65,7 +143,7 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
       data_packet.timestamp = curr_timestamp;
 
       printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
-
+      check_for_absence(curr_timestamp / CLOCK_SECOND);
       packetbuf_copyfrom(&data_packet, (int)sizeof(data_packet_struct));
       broadcast_send(&broadcast);
       leds_off(LEDS_RED);
