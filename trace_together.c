@@ -1,7 +1,7 @@
 #include "contiki.h"
 #include "dev/leds.h"
 #include <stdio.h>
-#include <stdlib.h>
+#include "lib/memb.h"
 #include "core/net/rime/rime.h"
 #include "dev/serial-line.h"
 #include "dev/uart1.h"
@@ -29,18 +29,17 @@ static data_packet_struct received_packet;
 static data_packet_struct data_packet;
 unsigned long curr_timestamp;
 
-
+/*----------------------------NODE MANAGEMENT--------------------------------*/
 /*---------------------------------------------------------------------------*/
-
-
 device_node head;
+MEMB(nodes, struct device_info, sizeof(struct device_info));
 
 #define ABSENT_LIMIT 30
 #define MIN_CONTACT 15
 
 void add_node(int id, unsigned long timestamp) {
     device_node new_node;
-    new_node = (device_node) malloc(sizeof(struct device_info));
+    new_node = memb_alloc(&nodes);
     new_node->id = id;
     new_node->first_timestamp = timestamp;
     if (head == NULL) {
@@ -56,20 +55,19 @@ void remove_node(device_node prev, device_node to_remove) {
     // removed node is head
     if (to_remove == head) {
         head = head->next;
-        free(to_remove);
+        memb_free(&nodes, to_remove);
         return;
     }
 
     // removed node is tail
     if (to_remove->next == NULL) {
         prev->next = NULL;
-        free(to_remove);
+        memb_free(&nodes, to_remove);
         return;
     }
     // node to remove is in the middle of the list
     prev->next = to_remove->next;
-    free(to_remove);
-    return;
+    memb_free(&nodes, to_remove);
 }
 
 void node_detected(int id, unsigned long timestamp) {

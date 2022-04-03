@@ -25,19 +25,19 @@ void remove_node(device_manager *manager, device_node *prev, device_node *to_rem
     // removed node is head
     if (to_remove == head) {
         head = head->next;
-        free(to_remove);
+        // free(to_remove);
         return;
     }
 
     // removed node is tail
     if (to_remove->next == NULL) {
         prev->next = NULL;
-        free(to_remove);
+        // free(to_remove);
         return;
     }
     // node to remove is in the middle of the list
     prev->next = to_remove->next;
-    free(to_remove);
+    // free(to_remove);
     return;
 }
 
