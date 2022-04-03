@@ -70,7 +70,7 @@ void remove_node(device_node prev, device_node to_remove) {
     memb_free(&nodes, to_remove);
 }
 
-void node_detected(int id, unsigned long timestamp) {
+void process_node(int id, unsigned long timestamp) {
     if (head == NULL) {
         // First node detected
         return add_node(id, timestamp); 
@@ -112,9 +112,12 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
   leds_on(LEDS_GREEN);
   memcpy(&received_packet, packetbuf_dataptr(), sizeof(data_packet_struct));
 
-  printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
+  // printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
 
   printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n", received_packet.src_id, received_packet.seq, received_packet.timestamp / CLOCK_SECOND, ((received_packet.timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
+  
+  process_node(received_packet.src_id, curr_timestamp / CLOCK_SECOND);
+  
   leds_off(LEDS_GREEN);
 }
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
@@ -132,7 +135,7 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
 
     // radio on
     NETSTACK_RADIO.on();
-
+    check_for_absence(curr_timestamp / CLOCK_SECOND);
     for(i = 0; i < NUM_SEND; i++){
       leds_on(LEDS_RED);
       
