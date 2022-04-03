@@ -42,6 +42,7 @@ void add_node(int id, unsigned long timestamp) {
     new_node = memb_alloc(&nodes);
     new_node->id = id;
     new_node->first_timestamp = timestamp;
+    new_node->last_timestamp = timestamp;
     if (head == NULL) {
         head = new_node;
         return; 
