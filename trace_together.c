@@ -43,6 +43,7 @@ void add_node(int id, unsigned long timestamp) {
     new_node->id = id;
     new_node->first_timestamp = timestamp;
     new_node->last_timestamp = timestamp;
+		new_node->is_connected = false;
     if (head == NULL) {
         head = new_node;
         return; 
@@ -82,6 +83,10 @@ void process_node(int id, unsigned long timestamp) {
         // Updating last timestamp if node is currently connected
         if (ptr->id == id) {
             ptr->last_timestamp = timestamp;
+						if (!ptr->is_connected && timestamp - ptr->last_timestamp > MIN_CONTACT) {
+							printf("%i DETECT %i\n", node_id, ptr->id);
+							ptr->is_connected = true;
+						}
             return;
         }
         ptr = ptr->next;

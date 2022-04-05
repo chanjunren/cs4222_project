@@ -15,6 +15,7 @@ struct device_info {
     int id;
     unsigned long first_timestamp;
     unsigned long last_timestamp;
+    bool is_connected;
     struct device_info *next;
 };
 
