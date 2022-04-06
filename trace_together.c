@@ -100,10 +100,9 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // Updating last timestamp if node is currently connected
     if (ptr->id == id)
     {
-      ptr->timestamp = curr_timestamp;
-      printf("curr_timestamp : %d , ptr->timestamp : %d\n", curr_timestamp, ptr->timestamp);
       if (ptr->is_detect && rssi < RSSI_THRESHOLD)
       {
+        printf("curr_timestamp : %d , ptr->timestamp : %d\n", curr_timestamp, ptr->timestamp);
         if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
         {
           printf("%d DETECT %d\n", ptr->timestamp, ptr->id);
