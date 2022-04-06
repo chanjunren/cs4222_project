@@ -103,7 +103,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       ptr->timestamp = timestamp;
       if (ptr->is_detect && rssi < RSSI_THRESHOLD)
       {
-        if ((ptr->timestamp - curr_timestamp) > MIN_CONTACT && !ptr->is_printed)
+        if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
         {
           printf("%d DETECT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
@@ -111,7 +111,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       }
       else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
       {
-        if ((ptr->timestap - curr_timestamp) > ABSENT_LIMIT && !ptr->is_printed) {
+        if ((curr_timestamp - ptr->timestap) > ABSENT_LIMIT && !ptr->is_printed) {
           printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
         }
