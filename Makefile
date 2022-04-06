@@ -1,5 +1,5 @@
 DEFINES+=PROJECT_CONF_H=\"project-conf.h\"
-CONTIKI_PROJECT = trace_together
+CONTIKI_PROJECT = trace_together_bday trace_together_quorum
 APPS+=powertrace
 all: $(CONTIKI_PROJECT)
 

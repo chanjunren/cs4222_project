@@ -111,7 +111,8 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       }
       else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
       {
-        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && !ptr->is_printed) {
+        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && !ptr->is_printed)
+        {
           printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
         }
@@ -139,8 +140,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (!ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT)
-        && !ptr->is_printed)
+    if (!ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT) && !ptr->is_printed)
     {
       printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
@@ -180,7 +180,6 @@ char sender_scheduler(struct rtimer *t, void *ptr)
 
   while (1)
   {
-
     // radio on
     NETSTACK_RADIO.on();
     check_for_absence(curr_timestamp / CLOCK_SECOND);
