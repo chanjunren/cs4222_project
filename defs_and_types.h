@@ -14,7 +14,8 @@ typedef struct {
 struct device_info {
     int id;
     unsigned long timestamp;
-    bool detect;
+    bool is_detect;
+    bool is_printed;
     struct device_info *next;
 };
 

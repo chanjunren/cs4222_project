@@ -36,7 +36,7 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 
 #define ABSENT_LIMIT 10
 #define MIN_CONTACT 5
-#define RSSI_THRESHOLD 60
+#define RSSI_THRESHOLD 58
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
 {
@@ -44,10 +44,14 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   new_node = memb_alloc(&nodes);
   new_node->id = id;
   new_node->timestamp = timestamp;
-  if (rssi < RSSI_THRESHOLD) {
-    new_node.detect = true;
-  } else {
-    new_node.detect = false;
+  new_node->is_printed = false;
+  if (rssi < RSSI_THRESHOLD)
+  {
+    new_node.is_detect = true;
+  }
+  else
+  {
+    new_node.is_detect = false;
   }
   if (head == NULL)
   {
@@ -97,17 +101,29 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     if (ptr->id == id)
     {
       ptr->timestamp = timestamp;
-      if (ptr->detect && rssi < RSSI_THRESHOLD 
-        && (ptr->timestamp - curr_timestamp) > MIN_CONTACT) {
+      if (ptr->is_detect && rssi < RSSI_THRESHOLD)
+      {
+        if ((ptr->timestamp - curr_timestamp) > MIN_CONTACT && !ptr->is_printed)
+        {
           printf("%d DETECT %d\n", ptr->timestamp, ptr->id);
-      } else if (!ptr->detect && rssi > RSSI_THRESHOLD
-        && (ptr->timestap - curr_timestamp) > ABSENT_LIMIT) {
+          ptr->is_printed = true;
+        }
+      }
+      else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
+      {
+        if ((ptr->timestap - curr_timestamp) > ABSENT_LIMIT && !ptr->is_printed) {
           printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
-      } else if (rssi < RSSI_THRESHOLD) {
-        ptr->detect = true;
+          ptr->is_printed = true;
+        }
+      }
+      else if (!ptr->is_detect && rssi < RSSI_THRESHOLD)
+      {
+        ptr->is_detect = true;
         ptr->timestamp = curr_timestamp;
-      } else {
-        ptr->detect = false;
+      }
+      else if (ptr->is_detect && rssi > RSSI_THRESHOLD)
+      {
+        ptr->is_detect = false;
         ptr->timestamp = curr_timestamp;
       }
       return;
@@ -123,7 +139,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
+    if (ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
     {
       printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
@@ -145,8 +161,8 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
   printf("Receive RSSI: %d\n", (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI));
   // printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
   // printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n", received_packet.src_id, received_packet.seq, received_packet.timestamp / CLOCK_SECOND, ((received_packet.timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
-  process_node(received_packet.src_id, curr_timestamp / CLOCK_SECOND, 
-    (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI) * -1);
+  process_node(received_packet.src_id, curr_timestamp / CLOCK_SECOND,
+               (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI) * -1);
   leds_off(LEDS_GREEN);
 }
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
