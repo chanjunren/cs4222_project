@@ -34,8 +34,8 @@ unsigned long curr_timestamp;
 device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
-#define ABSENT_LIMIT 30
-#define MIN_CONTACT 15
+#define ABSENT_LIMIT 10
+#define MIN_CONTACT 5
 
 void add_node(int id, unsigned long timestamp)
 {
@@ -93,7 +93,7 @@ void process_node(int id, unsigned long timestamp)
     if (ptr->id == id)
     {
       ptr->last_timestamp = timestamp;
-      if (!ptr->is_connected && timestamp - ptr->last_timestamp > MIN_CONTACT)
+      if (!ptr->is_connected && timestamp - ptr->first_timestamp > MIN_CONTACT)
       {
         printf("%i DETECT %i\n", node_id, ptr->id);
         ptr->is_connected = true;
@@ -108,7 +108,6 @@ void process_node(int id, unsigned long timestamp)
 
 void check_for_absence(unsigned long curr_timestamp)
 {
-  printf("Checking for absence...\n");
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
@@ -131,7 +130,7 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
   leds_on(LEDS_GREEN);
   memcpy(&received_packet, packetbuf_dataptr(), sizeof(data_packet_struct));
-
+  printf("Receive RSSI: %d\n", (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI));
   // printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
 
   // printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n", received_packet.src_id, received_packet.seq, received_packet.timestamp / CLOCK_SECOND, ((received_packet.timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
@@ -166,7 +165,7 @@ char sender_scheduler(struct rtimer *t, void *ptr)
       curr_timestamp = clock_time();
       data_packet.timestamp = curr_timestamp;
 
-      printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
+      //printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
       check_for_absence(curr_timestamp / CLOCK_SECOND);
       packetbuf_copyfrom(&data_packet, (int)sizeof(data_packet_struct));
       broadcast_send(&broadcast);
@@ -191,7 +190,7 @@ char sender_scheduler(struct rtimer *t, void *ptr)
       // get a value that is uniformly distributed between 0 and 2*SLEEP_CYCLE
       // the average is SLEEP_CYCLE
       NumSleep = random_rand() % (2 * SLEEP_CYCLE + 1);
-      printf(" Sleep for %d slots \n", NumSleep);
+      // printf(" Sleep for %d slots \n", NumSleep);
 
       // NumSleep should be a constant or static int
       for (i = 0; i < NumSleep; i++)
