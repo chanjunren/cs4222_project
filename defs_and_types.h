@@ -13,9 +13,8 @@ typedef struct {
 
 struct device_info {
     int id;
-    unsigned long first_timestamp;
-    unsigned long last_timestamp;
-    bool is_connected;
+    unsigned long timestamp;
+    bool detect;
     struct device_info *next;
 };
 
