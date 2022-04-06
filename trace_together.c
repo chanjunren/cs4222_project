@@ -93,7 +93,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // First node detected
     return add_node(id, curr_timestamp, rssi);
   }
-
+  printf("CURR RSSI Value : %d\n", rssi);
   device_node ptr = head;
   while (ptr != NULL)
   {
@@ -101,6 +101,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     if (ptr->id == id)
     {
       ptr->timestamp = curr_timestamp;
+      printf("curr_timestamp : %d , ptr->timestamp : %d\n", curr_timestamp, ptr->timestamp);
       if (ptr->is_detect && rssi < RSSI_THRESHOLD)
       {
         if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
@@ -139,7 +140,8 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
+    if (!ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT)
+        && !ptr->is_printed)
     {
       printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
