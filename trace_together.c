@@ -35,7 +35,7 @@ device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
 #define ABSENT_LIMIT 10
-#define MIN_CONTACT 5
+#define MIN_CONTACT 15
 #define RSSI_THRESHOLD 58
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
@@ -47,11 +47,11 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   new_node->is_printed = false;
   if (rssi < RSSI_THRESHOLD)
   {
-    new_node.is_detect = true;
+    new_node->is_detect = true;
   }
   else
   {
-    new_node.is_detect = false;
+    new_node->is_detect = false;
   }
   if (head == NULL)
   {
@@ -91,7 +91,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
   if (head == NULL)
   {
     // First node detected
-    return add_node(id, timestamp, rssi);
+    return add_node(id, curr_timestamp, rssi);
   }
 
   device_node ptr = head;
@@ -100,7 +100,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // Updating last timestamp if node is currently connected
     if (ptr->id == id)
     {
-      ptr->timestamp = timestamp;
+      ptr->timestamp = curr_timestamp;
       if (ptr->is_detect && rssi < RSSI_THRESHOLD)
       {
         if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
@@ -111,7 +111,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       }
       else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
       {
-        if ((curr_timestamp - ptr->timestap) > ABSENT_LIMIT && !ptr->is_printed) {
+        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && !ptr->is_printed) {
           printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
         }
@@ -131,7 +131,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     ptr = ptr->next;
   }
   // Node is detected for the first time
-  return add_node(id, timestamp, rssi);
+  return add_node(id, curr_timestamp, rssi);
 }
 
 void check_for_absence(unsigned long curr_timestamp)
