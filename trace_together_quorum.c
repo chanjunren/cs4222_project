@@ -14,8 +14,8 @@
 /*---------------------------------------------------------------------------*/
 // duty cycle = (2 * N_SIZE - 1) / (N_SIZE * N_SIZE)
 /*---------------------------------------------------------------------------*/
-#define TIME_SLOT RTIMER_SECOND/10
-#define N_SIZE 13
+#define TIME_SLOT RTIMER_SECOND / 20
+#define N_SIZE 16
 
 static int row;
 static int col;
