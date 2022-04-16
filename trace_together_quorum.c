@@ -107,6 +107,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
           printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
         }
+        ptr->timestamp = curr_timestamp;
       }
       else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
       {
