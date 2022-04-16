@@ -80,6 +80,7 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   new_node->rssi_1 = rssi;
   new_node->rssi_2 = -1;
   new_node->rssi_3 = -1;
+  new_node->next = NULL;
   if (rssi < RSSI_THRESHOLD)
   {
     new_node->in_proximity = true;
@@ -150,7 +151,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
       push_rssi(ptr, rssi);
-      print_list();
+      // print_list();
       printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
              id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
       if (get_avg_rssi(ptr) < RSSI_THRESHOLD)
