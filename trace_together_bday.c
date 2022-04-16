@@ -33,9 +33,9 @@ unsigned long curr_timestamp;
 device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
-#define ABSENT_LIMIT 10
-#define MIN_CONTACT 15
-#define RSSI_THRESHOLD 58
+#define ABSENT_LIMIT 22
+#define MIN_CONTACT 8
+#define RSSI_THRESHOLD 60
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
 {
@@ -92,40 +92,41 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // First node detected
     return add_node(id, curr_timestamp, rssi);
   }
-  printf("CURR RSSI Value : %d\n", rssi);
   device_node prev = NULL, ptr = head;
   while (ptr != NULL)
   {
     // Updating last timestamp if node is currently connected
     if (ptr->id == id)
     {
-      if (ptr->in_proximity && rssi < RSSI_THRESHOLD)
-      {
-        printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
-        if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
-        {
-          printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
-          ptr->is_printed = true;
+      ptr->last_pkt_recv_timestamp = curr_timestamp;
+      printf("Node %d: RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
+        id, rssi, ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      if (rssi < RSSI_THRESHOLD) {
+        if (ptr->in_proximity) {
+          if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
+          {
+            printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
+            ptr->is_printed = true;
+          }
+        } else {
+          // timestamp of first packet of node in proximity
+          ptr->in_proximity = true;
+          ptr->timestamp = curr_timestamp;
         }
-      }
-      else if (!ptr->in_proximity && rssi > RSSI_THRESHOLD)
-      {
-        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
+      } else {
+        if (!ptr->in_proximity && 
+          (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
-          printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
+          printf("%ld ABSENT1 %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
-      }
-      else if (!ptr->in_proximity && rssi < RSSI_THRESHOLD)
-      {
-        ptr->in_proximity = true;
-        ptr->timestamp = curr_timestamp;
-      }
-      else if (ptr->in_proximity && rssi > RSSI_THRESHOLD)
-      {
-        ptr->in_proximity = false;
-        ptr->timestamp = curr_timestamp;
-      }
+
+        if (ptr->in_proximity) {
+          // first packet received out of proximity 
+          ptr->timestamp = curr_timestamp;
+          ptr->in_proximity = false;
+        }
+      }  
       return;
     }
     prev = ptr;

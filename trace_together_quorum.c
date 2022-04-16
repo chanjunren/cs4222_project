@@ -33,10 +33,8 @@ unsigned long curr_timestamp;
 device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
-// #define ABSENT_LIMIT 10
-// #define MIN_CONTACT 15
-#define ABSENT_LIMIT 5
-#define MIN_CONTACT 5
+#define ABSENT_LIMIT 22
+#define MIN_CONTACT 8
 #define RSSI_THRESHOLD 60
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
@@ -144,7 +142,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT))
+    if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT + 8))
     {
       printf("%ld ABSENT2 %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
