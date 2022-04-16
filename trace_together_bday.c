@@ -14,10 +14,10 @@
 #endif
 
 /*---------------------------------------------------------------------------*/
-#define WAKE_TIME RTIMER_SECOND / 10 // 10 HZ, 0.1s
+#define WAKE_TIME RTIMER_SECOND / 20 // RTIMER_SECOND / 10 ==> 10 HZ, 0.1s
 /*---------------------------------------------------------------------------*/
 #define SLEEP_CYCLE 9                 // 0 for never sleep
-#define SLEEP_SLOT RTIMER_SECOND / 10 // sleep slot should not be too large to prevent overflow
+#define SLEEP_SLOT RTIMER_SECOND / 20 // sleep slot should not be too large to prevent overflow
 /*---------------------------------------------------------------------------*/
 // duty cycle = WAKE_TIME / (WAKE_TIME + SLEEP_SLOT * SLEEP_CYCLE)
 /*---------------------------------------------------------------------------*/
@@ -33,9 +33,9 @@ unsigned long curr_timestamp;
 device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
-#define ABSENT_LIMIT 22
-#define MIN_CONTACT 8
-#define RSSI_THRESHOLD 60
+#define ABSENT_LIMIT 26
+#define MIN_CONTACT 11
+#define RSSI_THRESHOLD 64
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
 {
@@ -117,7 +117,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
         if (!ptr->in_proximity && 
           (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
-          printf("%ld ABSENT1 %d\n", ptr->timestamp, ptr->id);
+          printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
 
@@ -141,7 +141,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_printed && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
+    if (ptr->is_printed && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT + 4))
     {
       printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
@@ -160,9 +160,6 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
   leds_on(LEDS_GREEN);
   memcpy(&received_packet, packetbuf_dataptr(), sizeof(data_packet_struct));
-  printf("Receive RSSI: %d\n", (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI));
-  // printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
-  // printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n", received_packet.src_id, received_packet.seq, received_packet.timestamp / CLOCK_SECOND, ((received_packet.timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
   process_node(received_packet.src_id, curr_timestamp / CLOCK_SECOND,
                (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI) * -1);
   leds_off(LEDS_GREEN);

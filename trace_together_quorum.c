@@ -118,7 +118,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
         if (!ptr->in_proximity && 
           (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
-          printf("%ld ABSENT1 %d\n", ptr->timestamp, ptr->id);
+          printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
 
@@ -142,9 +142,9 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT + 8))
+    if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT + 4))
     {
-      printf("%ld ABSENT2 %d\n", ptr->timestamp, ptr->id);
+      printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
     }
     prev = ptr;
@@ -160,18 +160,6 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 {
   leds_on(LEDS_GREEN);
   memcpy(&received_packet, packetbuf_dataptr(), sizeof(data_packet_struct));
-
-  // printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n",
-  //   data_packet.seq,
-  //   curr_timestamp,
-  //   curr_timestamp / CLOCK_SECOND,
-  //   ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
-
-  // printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n",
-  //   received_packet.src_id,
-  //   received_packet.seq,
-  //   received_packet.timestamp / CLOCK_SECOND,
-  //   ((received_packet.timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
   process_node(received_packet.src_id, curr_timestamp / CLOCK_SECOND,
                (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI) * -1);
   leds_off(LEDS_GREEN);
