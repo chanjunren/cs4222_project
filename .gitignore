@@ -2,3 +2,10 @@ obj_srf06-cc26xx
 trace_together-srf06-cc26xx.map
 trace_together.elf
 contiki-srf06-cc26xx.a
+
+trace_together_bday-srf06-cc26xx.map
+trace_together_bday.bin
+trace_together_bday.elf
+trace_together_quorum-srf06-cc26xx.map
+trace_together_quorum.bin
+trace_together_quorum.elf

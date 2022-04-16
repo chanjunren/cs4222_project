@@ -30,7 +30,6 @@ static data_packet_struct data_packet;
 unsigned long curr_timestamp;
 
 /*----------------------------NODE MANAGEMENT--------------------------------*/
-/*---------------------------------------------------------------------------*/
 device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
@@ -102,10 +101,10 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       if (ptr->is_detect && rssi < RSSI_THRESHOLD)
       {
-        printf("curr_timestamp : %d , ptr->timestamp : %d\n", curr_timestamp, ptr->timestamp);
+        printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
         if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
         {
-          printf("%d DETECT %d\n", ptr->timestamp, ptr->id);
+          printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
         }
       }
@@ -113,7 +112,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       {
         if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && !ptr->is_printed)
         {
-          printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
+          printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           ptr->is_printed = true;
         }
       }
@@ -142,7 +141,7 @@ void check_for_absence(unsigned long curr_timestamp)
   {
     if (!ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT) && !ptr->is_printed)
     {
-      printf("%d ABSENT %d\n", ptr->timestamp, ptr->id);
+      printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
     }
     prev = ptr;

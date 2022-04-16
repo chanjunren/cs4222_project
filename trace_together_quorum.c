@@ -29,6 +29,125 @@ static struct pt pt;
 static data_packet_struct received_packet;
 static data_packet_struct data_packet;
 unsigned long curr_timestamp;
+/*----------------------------NODE MANAGEMENT--------------------------------*/
+device_node head;
+MEMB(nodes, struct device_info, sizeof(struct device_info));
+
+#define ABSENT_LIMIT 10
+#define MIN_CONTACT 15
+#define RSSI_THRESHOLD 58
+
+void add_node(int id, unsigned long timestamp, signed short rssi)
+{
+  device_node new_node;
+  new_node = memb_alloc(&nodes);
+  new_node->id = id;
+  new_node->timestamp = timestamp;
+  new_node->is_printed = false;
+  if (rssi < RSSI_THRESHOLD)
+  {
+    new_node->is_detect = true;
+  }
+  else
+  {
+    new_node->is_detect = false;
+  }
+  if (head == NULL)
+  {
+    head = new_node;
+    return;
+  }
+  device_node ptr = head;
+  while (ptr->next != NULL)
+    ptr = ptr->next;
+  ptr->next = new_node;
+}
+
+void remove_node(device_node prev, device_node to_remove)
+{
+  // removed node is head
+  if (to_remove == head)
+  {
+    head = head->next;
+    memb_free(&nodes, to_remove);
+    return;
+  }
+
+  // removed node is tail
+  if (to_remove->next == NULL)
+  {
+    prev->next = NULL;
+    memb_free(&nodes, to_remove);
+    return;
+  }
+  // node to remove is in the middle of the list
+  prev->next = to_remove->next;
+  memb_free(&nodes, to_remove);
+}
+
+void process_node(int id, unsigned long curr_timestamp, signed short rssi)
+{
+  if (head == NULL)
+  {
+    // First node detected
+    return add_node(id, curr_timestamp, rssi);
+  }
+  printf("CURR RSSI Value : %d\n", rssi);
+  device_node ptr = head;
+  while (ptr != NULL)
+  {
+    // Updating last timestamp if node is currently connected
+    if (ptr->id == id)
+    {
+      if (ptr->is_detect && rssi < RSSI_THRESHOLD)
+      {
+        printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
+        if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
+        {
+          printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
+          ptr->is_printed = true;
+        }
+      }
+      else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
+      {
+        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && !ptr->is_printed)
+        {
+          printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
+          ptr->is_printed = true;
+        }
+      }
+      else if (!ptr->is_detect && rssi < RSSI_THRESHOLD)
+      {
+        ptr->is_detect = true;
+        ptr->timestamp = curr_timestamp;
+      }
+      else if (ptr->is_detect && rssi > RSSI_THRESHOLD)
+      {
+        ptr->is_detect = false;
+        ptr->timestamp = curr_timestamp;
+      }
+      return;
+    }
+    ptr = ptr->next;
+  }
+  // Node is detected for the first time
+  return add_node(id, curr_timestamp, rssi);
+}
+
+void check_for_absence(unsigned long curr_timestamp)
+{
+  device_node ptr = head, prev = NULL;
+  while (ptr != NULL)
+  {
+    if (!ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT) && !ptr->is_printed)
+    {
+      printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
+      remove_node(prev, ptr);
+    }
+    prev = ptr;
+    ptr = ptr->next;
+  }
+}
 /*---------------------------------------------------------------------------*/
 PROCESS(cc2650_nbr_discovery_process, "cc2650 neighbour discovery process");
 AUTOSTART_PROCESSES(&cc2650_nbr_discovery_process);
@@ -39,17 +158,17 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
   leds_on(LEDS_GREEN);
   memcpy(&received_packet, packetbuf_dataptr(), sizeof(data_packet_struct));
 
-  printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n",
-    data_packet.seq,
-    curr_timestamp,
-    curr_timestamp / CLOCK_SECOND,
-    ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
+  // printf("Send seq# %lu  @ %8lu  %3lu.%03lu\n",
+  //   data_packet.seq,
+  //   curr_timestamp,
+  //   curr_timestamp / CLOCK_SECOND,
+  //   ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
 
-  printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n",
-    received_packet.src_id,
-    received_packet.seq,
-    received_packet.timestamp / CLOCK_SECOND,
-    ((received_packet.timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
+  // printf("Received packet from node %lu with sequence number %lu and timestamp %3lu.%03lu\n",
+  //   received_packet.src_id,
+  //   received_packet.seq,
+  //   received_packet.timestamp / CLOCK_SECOND,
+  //   ((received_packet.timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
   
   leds_off(LEDS_GREEN);
 }
@@ -59,7 +178,6 @@ static struct broadcast_conn broadcast;
 /*---------------------------------------------------------------------------*/
 char sender_scheduler(struct rtimer *t, void *ptr) {
   static uint16_t i = 0;
-  static int NumSleep=0;
   PT_BEGIN(&pt);
 
   curr_timestamp = clock_time();
@@ -107,21 +225,8 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
       leds_on(LEDS_BLUE);
       // radio off
       NETSTACK_RADIO.off();
-
-      // SLEEP_SLOT cannot be too large as value will overflow,
-      // to have a large sleep interval, sleep many times instead
-
-      // get a value that is uniformly distributed between 0 and 2*SLEEP_CYCLE
-      // the average is SLEEP_CYCLE
-      //NumSleep = random_rand() % (2 * SLEEP_CYCLE + 1);
-      //printf(" Sleep for %d slots \n",NumSleep);
-
-      // NumSleep should be a constant or static int
-      //for(i = 0; i < NumSleep; i++) {
-      //printf("Sleeping for %lu time\n", TIME_SLOT);
       rtimer_set(t, RTIMER_TIME(t) + TIME_SLOT, 1, (rtimer_callback_t)sender_scheduler, ptr);
       PT_YIELD(&pt);
-      //}
       leds_off(LEDS_BLUE);
     }
       
