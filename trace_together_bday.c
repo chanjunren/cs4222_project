@@ -36,19 +36,22 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 #define ABSENT_LIMIT 26
 #define MIN_CONTACT 11
 #define RSSI_THRESHOLD 64
+#define DEBUG_PRG false
 
-void push_rssi(device_node node, int rssi) {
+void push_rssi(device_node node, int rssi)
+{
   node->rssi_3 = node->rssi_2;
   node->rssi_2 = node->rssi_1;
   node->rssi_1 = rssi;
 }
 
-int get_avg_rssi(device_node node) {
+int get_avg_rssi(device_node node)
+{
   return node->rssi_2 == -1
-    ? node->rssi_1
-    : node->rssi_3 == -1
-    ? (node->rssi_1 + node->rssi_2) / 2
-    : (node->rssi_1 + node->rssi_2 + node->rssi_3) / 3;
+             ? node->rssi_1
+         : node->rssi_3 == -1
+             ? (node->rssi_1 + node->rssi_2) / 2
+             : (node->rssi_1 + node->rssi_2 + node->rssi_3) / 3;
 }
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
@@ -118,34 +121,44 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
       push_rssi(ptr, rssi);
-      printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
-        id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
-      if (get_avg_rssi(ptr) < RSSI_THRESHOLD) {
-        if (ptr->in_proximity) {
+      if (DEBUG_PRG)
+      {
+        printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
+               id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      }
+      if (get_avg_rssi(ptr) < RSSI_THRESHOLD)
+      {
+        if (ptr->in_proximity)
+        {
           if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
           {
             printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
             ptr->is_printed = true;
           }
-        } else {
+        }
+        else
+        {
           // timestamp of first packet of node in proximity
           ptr->in_proximity = true;
           ptr->timestamp = curr_timestamp;
         }
-      } else {
-        if (!ptr->in_proximity && 
-          (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
+      }
+      else
+      {
+        if (!ptr->in_proximity &&
+            (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
           printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
 
-        if (ptr->in_proximity) {
-          // first packet received out of proximity 
+        if (ptr->in_proximity)
+        {
+          // first packet received out of proximity
           ptr->timestamp = curr_timestamp;
           ptr->in_proximity = false;
         }
-      }  
+      }
       return;
     }
     prev = ptr;
@@ -207,8 +220,6 @@ char sender_scheduler(struct rtimer *t, void *ptr)
       data_packet.seq++;
       curr_timestamp = clock_time();
       data_packet.timestamp = curr_timestamp;
-
-      // printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
       packetbuf_copyfrom(&data_packet, (int)sizeof(data_packet_struct));
       broadcast_send(&broadcast);
       leds_off(LEDS_RED);

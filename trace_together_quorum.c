@@ -36,6 +36,7 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 #define ABSENT_LIMIT 26
 #define MIN_CONTACT 11
 #define RSSI_THRESHOLD 64
+#define DEBUG_PRG false
 
 void print_list()
 {
@@ -95,11 +96,15 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
     return;
   }
   device_node ptr = head;
-  while (ptr->next != NULL) {
+  while (ptr->next != NULL)
+  {
     ptr = ptr->next;
   }
   ptr->next = new_node;
-  print_list();
+  if (DEBUG_PRG)
+  {
+    print_list();
+  }
 }
 
 void remove_node(device_node prev, device_node to_remove)
@@ -107,33 +112,21 @@ void remove_node(device_node prev, device_node to_remove)
   // removed node is head
   if (to_remove == head)
   {
-    printf("=== Before remove1 ===\n");
-    print_list();
     head = head->next;
     memb_free(&nodes, to_remove);
-    printf("=== After remove1 ===\n");
-    print_list();
     return;
   }
 
   // removed node is tail
   if (to_remove->next == NULL)
   {
-    printf("=== Before remove2 ===\n");
-    print_list();
     prev->next = NULL;
     memb_free(&nodes, to_remove);
-    printf("=== After remove2 ===\n");
-    print_list();
     return;
   }
   // node to remove is in the middle of the list
-  printf("=== Before remove3 ===\n");
-  print_list();
   prev->next = to_remove->next;
   memb_free(&nodes, to_remove);
-  printf("=== After remove3 ===\n");
-  print_list();
 }
 
 void process_node(int id, unsigned long curr_timestamp, signed short rssi)
@@ -151,9 +144,11 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
       push_rssi(ptr, rssi);
-      // print_list();
-      printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
-             id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      if (DEBUG_PRG)
+      {
+        printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
+               id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      }
       if (get_avg_rssi(ptr) < RSSI_THRESHOLD)
       {
         if (ptr->in_proximity)
@@ -178,6 +173,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
         {
           printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
+          return;
         }
 
         if (ptr->in_proximity)
@@ -311,9 +307,6 @@ PROCESS_THREAD(cc2650_nbr_discovery_process, ev, data)
 #endif
 
   printf("CC2650 neighbour discovery\n");
-  // printf("Node %d will be sending packet of size %d Bytes\n",
-  // node_id, (int)sizeof(data_packet_struct));
-  // printf("N_SIZE: %d row: %d col: %d\n", N_SIZE, row, col);
   // radio off
   NETSTACK_RADIO.off();
 
