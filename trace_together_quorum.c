@@ -92,7 +92,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // First node detected
     return add_node(id, curr_timestamp, rssi);
   }
-  printf("CURR RSSI Value : %d\n", rssi);
+  // printf("CURR RSSI Value : %d\n", rssi);
   device_node ptr = head;
   while (ptr != NULL)
   {
@@ -188,7 +188,7 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
     ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
 
   while(1) {
-
+    check_for_absence(curr_timestamp / CLOCK_SECOND);
     // radio on
     NETSTACK_RADIO.on();
     if (currRow == row || currCol == col) {

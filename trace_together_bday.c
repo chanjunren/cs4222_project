@@ -191,7 +191,6 @@ char sender_scheduler(struct rtimer *t, void *ptr)
       data_packet.timestamp = curr_timestamp;
 
       // printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu\n", data_packet.seq, curr_timestamp, curr_timestamp / CLOCK_SECOND, ((curr_timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
-      check_for_absence(curr_timestamp / CLOCK_SECOND);
       packetbuf_copyfrom(&data_packet, (int)sizeof(data_packet_struct));
       broadcast_send(&broadcast);
       leds_off(LEDS_RED);
