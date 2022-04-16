@@ -98,6 +98,7 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
     ptr = ptr->next;
   }
   ptr->next = new_node;
+  print_list();
 }
 
 void remove_node(device_node prev, device_node to_remove)
