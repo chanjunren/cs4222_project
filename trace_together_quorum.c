@@ -49,7 +49,7 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   if (rssi < RSSI_THRESHOLD)
   {
     new_node->in_proximity = true;
-    new_node->first_close_prox_timestamp = timestamp;
+    new_node->timestamp = timestamp;
   }
   else
   {
@@ -103,36 +103,35 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     if (ptr->id == id)
     {
       printf("Node %d: | is_printed: %d | first_prox_timestamp: %ld | timestamp: %ld\n\n",
-        id, ptr->is_printed, ptr->first_close_prox_timestamp, ptr->timestamp);
-      if (ptr->in_proximity && rssi < RSSI_THRESHOLD)
-      {
-        // printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
-        if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
-        {
-          printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
-          ptr->is_printed = true;
+        id, ptr->is_printed, ptr->timestamp, ptr->timestamp);
+      if (rssi < RSSI_THRESHOLD) {
+        if (ptr->in_proximity) {
+          if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
+          {
+            printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
+            ptr->is_printed = true;
+          }
+          ptr->timestamp = curr_timestamp;
+        } else {
+          // timestamp of first packet of node in proximity
+          ptr->in_proximity = true;
+          ptr->timestamp = curr_timestamp;
+          ptr->timestamp = curr_timestamp;
         }
-        ptr->timestamp = curr_timestamp;
-      }
-      else if (!ptr->in_proximity && rssi > RSSI_THRESHOLD)
-      {
-        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
+      } else {
+        if (!ptr->in_proximity && 
+          (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
           printf("%ld ABSENT1 %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
-      }
-      else if (!ptr->in_proximity && rssi < RSSI_THRESHOLD)
-      {
-        ptr->in_proximity = true;
-        ptr->first_close_prox_timestamp = curr_timestamp;
-        ptr->timestamp = curr_timestamp;
-      }
-      else if (ptr->in_proximity && rssi > RSSI_THRESHOLD)
-      {
-        ptr->in_proximity = false;
-        ptr->timestamp = curr_timestamp;
-      }
+
+        if (ptr->in_proximity) {
+          // first packet received out of proximity 
+          ptr->timestamp = curr_timestamp;
+          ptr->in_proximity = false;
+        }
+      }  
       return;
     }
     prev = ptr;
