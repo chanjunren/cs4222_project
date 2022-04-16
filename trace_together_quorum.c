@@ -94,8 +94,9 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
     return;
   }
   device_node ptr = head;
-  while (ptr->next != NULL)
+  while (ptr->next != NULL) {
     ptr = ptr->next;
+  }
   ptr->next = new_node;
 }
 
@@ -104,9 +105,9 @@ void remove_node(device_node prev, device_node to_remove)
   // removed node is head
   if (to_remove == head)
   {
-    head = head->next;
     printf("=== Before remove1 ===\n");
     print_list();
+    head = head->next;
     memb_free(&nodes, to_remove);
     printf("=== After remove1 ===\n");
     print_list();
@@ -116,20 +117,20 @@ void remove_node(device_node prev, device_node to_remove)
   // removed node is tail
   if (to_remove->next == NULL)
   {
-    prev->next = NULL;
-    printf("=== Before remove1 ===\n");
+    printf("=== Before remove2 ===\n");
     print_list();
+    prev->next = NULL;
     memb_free(&nodes, to_remove);
-    printf("=== After remove1 ===\n");
+    printf("=== After remove2 ===\n");
     print_list();
     return;
   }
   // node to remove is in the middle of the list
-  prev->next = to_remove->next;
-  printf("=== Before remove1 ===\n");
+  printf("=== Before remove3 ===\n");
   print_list();
+  prev->next = to_remove->next;
   memb_free(&nodes, to_remove);
-  printf("=== After remove1 ===\n");
+  printf("=== After remove3 ===\n");
   print_list();
 }
 
