@@ -101,7 +101,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       if (ptr->is_detect && rssi < RSSI_THRESHOLD)
       {
-        printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
+        // printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
         if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
         {
           printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
@@ -263,9 +263,9 @@ PROCESS_THREAD(cc2650_nbr_discovery_process, ev, data)
   #endif
 
   printf("CC2650 neighbour discovery\n");
-  printf("Node %d will be sending packet of size %d Bytes\n",
-    node_id, (int)sizeof(data_packet_struct));
-  printf("N_SIZE: %d row: %d col: %d\n", N_SIZE, row, col);
+  // printf("Node %d will be sending packet of size %d Bytes\n",
+    // node_id, (int)sizeof(data_packet_struct));
+  // printf("N_SIZE: %d row: %d col: %d\n", N_SIZE, row, col);
   // radio off
   NETSTACK_RADIO.off();
 
