@@ -33,8 +33,10 @@ unsigned long curr_timestamp;
 device_node head;
 MEMB(nodes, struct device_info, sizeof(struct device_info));
 
-#define ABSENT_LIMIT 10
-#define MIN_CONTACT 15
+// #define ABSENT_LIMIT 10
+// #define MIN_CONTACT 15
+#define ABSENT_LIMIT 5
+#define MIN_CONTACT 5
 #define RSSI_THRESHOLD 60
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
