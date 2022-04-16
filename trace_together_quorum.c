@@ -95,7 +95,6 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // First node detected
     return add_node(id, curr_timestamp, rssi);
   }
-  // printf("CURR RSSI Value : %d\n", rssi);
   device_node prev = NULL, ptr = head;
   while (ptr != NULL)
   {
@@ -103,8 +102,8 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     if (ptr->id == id)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
-      printf("Node %d: | is_printed: %d | last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
-        id, ptr->is_printed, ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      printf("Node %d: RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
+        id, rssi, ptr->last_pkt_recv_timestamp, ptr->timestamp);
       if (rssi < RSSI_THRESHOLD) {
         if (ptr->in_proximity) {
           if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
@@ -196,9 +195,8 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
   while(1) {
     // radio on
     NETSTACK_RADIO.on();
-    check_for_absence(curr_timestamp / CLOCK_SECOND);
-
     if (currRow == row || currCol == col) {
+      check_for_absence(curr_timestamp / CLOCK_SECOND);
       for(i = 0; i < NUM_SEND; i++) {
         leds_on(LEDS_RED);
         
