@@ -118,7 +118,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       {
         if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
-          printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
+          printf("%ld ABSENT1 %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
       }
@@ -147,9 +147,9 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_printed && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
+    if (ptr->is_printed && !ptr->in_proximity && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
     {
-      printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
+      printf("%ld ABSENT2 %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
     }
     prev = ptr;
