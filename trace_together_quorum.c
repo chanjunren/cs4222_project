@@ -111,11 +111,9 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
             printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
             ptr->is_printed = true;
           }
-          ptr->timestamp = curr_timestamp;
         } else {
           // timestamp of first packet of node in proximity
           ptr->in_proximity = true;
-          ptr->timestamp = curr_timestamp;
           ptr->timestamp = curr_timestamp;
         }
       } else {
@@ -193,9 +191,9 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
     curr_timestamp,
     curr_timestamp / CLOCK_SECOND,
     ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
+  check_for_absence(curr_timestamp / CLOCK_SECOND);
 
   while(1) {
-    check_for_absence(curr_timestamp / CLOCK_SECOND);
     // radio on
     NETSTACK_RADIO.on();
     if (currRow == row || currCol == col) {
