@@ -169,7 +169,8 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
   //   received_packet.seq,
   //   received_packet.timestamp / CLOCK_SECOND,
   //   ((received_packet.timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
-  
+  process_node(received_packet.src_id, curr_timestamp / CLOCK_SECOND,
+               (signed short)packetbuf_attr(PACKETBUF_ATTR_RSSI) * -1);
   leds_off(LEDS_GREEN);
 }
 
