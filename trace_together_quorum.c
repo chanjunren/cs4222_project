@@ -46,7 +46,11 @@ void print_list()
   }
   device_node ptr = head;
   while (ptr != NULL)
+  {
     printf("%d ", ptr->id);
+    ptr = ptr->next;
+  }
+
   printf("\n");
 }
 
