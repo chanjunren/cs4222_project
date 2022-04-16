@@ -118,8 +118,8 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
       push_rssi(ptr, rssi);
-      printf("Node %d: RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
-        id, rssi, ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
+        id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
       if (get_avg_rssi(ptr) < RSSI_THRESHOLD) {
         if (ptr->in_proximity) {
           if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
