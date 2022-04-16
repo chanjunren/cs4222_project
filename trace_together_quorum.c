@@ -37,6 +37,16 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 #define MIN_CONTACT 11
 #define RSSI_THRESHOLD 64
 
+void print_list() {
+  printf("List: ");
+  if (head == NULL) {
+    printf("Empty\n");
+  }
+  device_node ptr = head;
+  while (ptr != NULL) printf("%d ", ptr->id);
+  printf("\n");
+}
+
 void push_rssi(device_node node, int rssi) {
   node->rssi_3 = node->rssi_2;
   node->rssi_2 = node->rssi_1;
@@ -117,6 +127,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
       push_rssi(ptr, rssi);
+      print_list();
       printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
         id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
       if (get_avg_rssi(ptr) < RSSI_THRESHOLD) {

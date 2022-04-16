@@ -69,6 +69,7 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   {
     new_node->in_proximity = false;
   }
+
   if (head == NULL)
   {
     head = new_node;
