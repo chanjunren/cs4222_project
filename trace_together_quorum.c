@@ -35,7 +35,7 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 
 #define ABSENT_LIMIT 10
 #define MIN_CONTACT 15
-#define RSSI_THRESHOLD 58
+#define RSSI_THRESHOLD 60
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
 {
@@ -46,11 +46,12 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   new_node->is_printed = false;
   if (rssi < RSSI_THRESHOLD)
   {
-    new_node->is_detect = true;
+    new_node->in_proximity = true;
+    new_node->first_close_prox_timestamp = timestamp;
   }
   else
   {
-    new_node->is_detect = false;
+    new_node->in_proximity = false;
   }
   if (head == NULL)
   {
@@ -99,7 +100,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // Updating last timestamp if node is currently connected
     if (ptr->id == id)
     {
-      if (ptr->is_detect && rssi < RSSI_THRESHOLD)
+      if (ptr->in_proximity && rssi < RSSI_THRESHOLD)
       {
         // printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
         if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
@@ -109,7 +110,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
         }
         ptr->timestamp = curr_timestamp;
       }
-      else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
+      else if (!ptr->in_proximity && rssi > RSSI_THRESHOLD)
       {
         if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
@@ -117,14 +118,15 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
           remove_node(prev, ptr);
         }
       }
-      else if (!ptr->is_detect && rssi < RSSI_THRESHOLD)
+      else if (!ptr->in_proximity && rssi < RSSI_THRESHOLD)
       {
-        ptr->is_detect = true;
+        ptr->in_proximity = true;
+        ptr->first_close_prox_timestamp = curr_timestamp;
         ptr->timestamp = curr_timestamp;
       }
-      else if (ptr->is_detect && rssi > RSSI_THRESHOLD)
+      else if (ptr->in_proximity && rssi > RSSI_THRESHOLD)
       {
-        ptr->is_detect = false;
+        ptr->in_proximity = false;
         ptr->timestamp = curr_timestamp;
       }
       return;
