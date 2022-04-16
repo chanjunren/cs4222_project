@@ -92,7 +92,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // First node detected
     return add_node(id, curr_timestamp, rssi);
   }
-  // printf("CURR RSSI Value : %d\n", rssi);
+  printf("CURR RSSI Value : %d\n", rssi);
   device_node prev = NULL, ptr = head;
   while (ptr != NULL)
   {
