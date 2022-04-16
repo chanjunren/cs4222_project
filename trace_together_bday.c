@@ -35,7 +35,7 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 
 #define ABSENT_LIMIT 26
 #define MIN_CONTACT 11
-#define RSSI_THRESHOLD 62
+#define RSSI_THRESHOLD 64
 
 void push_rssi(device_node node, int rssi) {
   node->rssi_3 = node->rssi_2;
