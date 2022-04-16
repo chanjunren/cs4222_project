@@ -110,7 +110,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       }
       else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
       {
-        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT)
+        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
           printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
