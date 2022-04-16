@@ -93,7 +93,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     return add_node(id, curr_timestamp, rssi);
   }
   // printf("CURR RSSI Value : %d\n", rssi);
-  device_node ptr = head;
+  device_node prev = NULL, ptr = head;
   while (ptr != NULL)
   {
     // Updating last timestamp if node is currently connected
@@ -110,10 +110,10 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       }
       else if (!ptr->is_detect && rssi > RSSI_THRESHOLD)
       {
-        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && !ptr->is_printed)
+        if ((curr_timestamp - ptr->timestamp) > ABSENT_LIMIT)
         {
           printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
-          ptr->is_printed = true;
+          remove_node(prev, ptr);
         }
       }
       else if (!ptr->is_detect && rssi < RSSI_THRESHOLD)
@@ -128,6 +128,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       }
       return;
     }
+    prev = ptr;
     ptr = ptr->next;
   }
   // Node is detected for the first time
@@ -199,14 +200,6 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
         curr_timestamp = clock_time();
         data_packet.timestamp = curr_timestamp;
 
-////        printf("Send seq# %lu  @ %8lu ticks   %3lu.%03lu currRow: %d currCol: %d\n",
-//          data_packet.seq,
-//          curr_timestamp,
-//          curr_timestamp / CLOCK_SECOND,
-//          ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND,
-//          currRow,
-//          currCol);
-
         packetbuf_copyfrom(&data_packet, (int)sizeof(data_packet_struct));
         broadcast_send(&broadcast);
         leds_off(LEDS_RED);
@@ -231,9 +224,8 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
       leds_off(LEDS_BLUE);
     }
       
-      currCol = (currCol + 1) % N_SIZE;
-      if (currCol == 0) currRow = (currRow + 1) % N_SIZE;
-      
+    currCol = (currCol + 1) % N_SIZE;
+    if (currCol == 0) currRow = (currRow + 1) % N_SIZE;
   }
   
   PT_END(&pt);
