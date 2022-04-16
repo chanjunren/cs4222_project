@@ -140,7 +140,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (!ptr->is_detect && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
+    if ((curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
     {
       printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);
