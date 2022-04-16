@@ -100,6 +100,8 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // Updating last timestamp if node is currently connected
     if (ptr->id == id)
     {
+      printf("Node %d: | is_printed: %d | first_prox_timestamp: %ld | timestamp: %ld\n\n",
+        id, ptr->is_printed, ptr->first_close_prox_timestamp, ptr->timestamp);
       if (ptr->in_proximity && rssi < RSSI_THRESHOLD)
       {
         // printf("curr_timestamp : %ld , ptr->timestamp : %ld\n", curr_timestamp, ptr->timestamp);
