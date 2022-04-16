@@ -58,7 +58,6 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   new_node->id = id;
   new_node->timestamp = timestamp;
   new_node->is_printed = false;
-  new_node->rssi_count = 1;
   new_node->rssi_1 = rssi;
   new_node->rssi_2 = -1;
   new_node->rssi_3 = -1;
@@ -160,7 +159,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_printed && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT + 4))
+    if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT + 4))
     {
       printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);

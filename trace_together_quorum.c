@@ -37,6 +37,20 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 #define MIN_CONTACT 11
 #define RSSI_THRESHOLD 64
 
+void push_rssi(device_node node, int rssi) {
+  node->rssi_3 = node->rssi_2;
+  node->rssi_2 = node->rssi_1;
+  node->rssi_1 = rssi;
+}
+
+int get_avg_rssi(device_node node) {
+  return node->rssi_2 == -1
+    ? node->rssi_1
+    : node->rssi_3 == -1
+    ? (node->rssi_1 + node->rssi_2) / 2
+    : (node->rssi_1 + node->rssi_2 + node->rssi_3) / 3;
+}
+
 void add_node(int id, unsigned long timestamp, signed short rssi)
 {
   device_node new_node;
@@ -44,10 +58,12 @@ void add_node(int id, unsigned long timestamp, signed short rssi)
   new_node->id = id;
   new_node->timestamp = timestamp;
   new_node->is_printed = false;
+  new_node->rssi_1 = rssi;
+  new_node->rssi_2 = -1;
+  new_node->rssi_3 = -1;
   if (rssi < RSSI_THRESHOLD)
   {
     new_node->in_proximity = true;
-    new_node->timestamp = timestamp;
   }
   else
   {
@@ -100,9 +116,10 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     if (ptr->id == id)
     {
       ptr->last_pkt_recv_timestamp = curr_timestamp;
-      printf("Node %d: RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
-        id, rssi, ptr->last_pkt_recv_timestamp, ptr->timestamp);
-      if (rssi < RSSI_THRESHOLD) {
+      push_rssi(ptr, rssi);
+      printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
+        id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      if (get_avg_rssi(ptr) < RSSI_THRESHOLD) {
         if (ptr->in_proximity) {
           if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
           {
