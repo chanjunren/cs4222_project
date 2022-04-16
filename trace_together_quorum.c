@@ -35,7 +35,7 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 
 #define ABSENT_LIMIT 22
 #define MIN_CONTACT 8
-#define RSSI_THRESHOLD 60
+#define RSSI_THRESHOLD 64
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
 {
