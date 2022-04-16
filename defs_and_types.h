@@ -15,6 +15,8 @@ struct device_info {
     int id;
     unsigned long timestamp;
     unsigned long last_pkt_recv_timestamp;
+    int rssi_1, rssi_2, rssi_3;
+    int rssi_count;
     bool in_proximity;
     bool is_printed;
     struct device_info *next;
