@@ -37,28 +37,33 @@ MEMB(nodes, struct device_info, sizeof(struct device_info));
 #define MIN_CONTACT 11
 #define RSSI_THRESHOLD 64
 
-void print_list() {
+void print_list()
+{
   printf("List: ");
-  if (head == NULL) {
+  if (head == NULL)
+  {
     printf("Empty\n");
   }
   device_node ptr = head;
-  while (ptr != NULL) printf("%d ", ptr->id);
+  while (ptr != NULL)
+    printf("%d ", ptr->id);
   printf("\n");
 }
 
-void push_rssi(device_node node, int rssi) {
+void push_rssi(device_node node, int rssi)
+{
   node->rssi_3 = node->rssi_2;
   node->rssi_2 = node->rssi_1;
   node->rssi_1 = rssi;
 }
 
-int get_avg_rssi(device_node node) {
+int get_avg_rssi(device_node node)
+{
   return node->rssi_2 == -1
-    ? node->rssi_1
-    : node->rssi_3 == -1
-    ? (node->rssi_1 + node->rssi_2) / 2
-    : (node->rssi_1 + node->rssi_2 + node->rssi_3) / 3;
+             ? node->rssi_1
+         : node->rssi_3 == -1
+             ? (node->rssi_1 + node->rssi_2) / 2
+             : (node->rssi_1 + node->rssi_2 + node->rssi_3) / 3;
 }
 
 void add_node(int id, unsigned long timestamp, signed short rssi)
@@ -96,7 +101,11 @@ void remove_node(device_node prev, device_node to_remove)
   if (to_remove == head)
   {
     head = head->next;
+    printf("=== Before remove1 ===\n");
+    print_list();
     memb_free(&nodes, to_remove);
+    printf("=== After remove1 ===\n");
+    print_list();
     return;
   }
 
@@ -104,12 +113,20 @@ void remove_node(device_node prev, device_node to_remove)
   if (to_remove->next == NULL)
   {
     prev->next = NULL;
+    printf("=== Before remove1 ===\n");
+    print_list();
     memb_free(&nodes, to_remove);
+    printf("=== After remove1 ===\n");
+    print_list();
     return;
   }
   // node to remove is in the middle of the list
   prev->next = to_remove->next;
+  printf("=== Before remove1 ===\n");
+  print_list();
   memb_free(&nodes, to_remove);
+  printf("=== After remove1 ===\n");
+  print_list();
 }
 
 void process_node(int id, unsigned long curr_timestamp, signed short rssi)
@@ -129,33 +146,40 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
       push_rssi(ptr, rssi);
       print_list();
       printf("Node %d: Avg RSSI: %d| last_pkt_recv_timestamp: %ld | timestamp: %ld\n\n",
-        id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
-      if (get_avg_rssi(ptr) < RSSI_THRESHOLD) {
-        if (ptr->in_proximity) {
+             id, get_avg_rssi(ptr), ptr->last_pkt_recv_timestamp, ptr->timestamp);
+      if (get_avg_rssi(ptr) < RSSI_THRESHOLD)
+      {
+        if (ptr->in_proximity)
+        {
           if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
           {
             printf("%ld DETECT %d\n", ptr->timestamp, ptr->id);
             ptr->is_printed = true;
           }
-        } else {
+        }
+        else
+        {
           // timestamp of first packet of node in proximity
           ptr->in_proximity = true;
           ptr->timestamp = curr_timestamp;
         }
-      } else {
-        if (!ptr->in_proximity && 
-          (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
+      }
+      else
+      {
+        if (!ptr->in_proximity &&
+            (curr_timestamp - ptr->timestamp) > ABSENT_LIMIT && ptr->is_printed)
         {
           printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
           remove_node(prev, ptr);
         }
 
-        if (ptr->in_proximity) {
-          // first packet received out of proximity 
+        if (ptr->in_proximity)
+        {
+          // first packet received out of proximity
           ptr->timestamp = curr_timestamp;
           ptr->in_proximity = false;
         }
-      }  
+      }
       return;
     }
     prev = ptr;
@@ -196,24 +220,28 @@ broadcast_recv(struct broadcast_conn *c, const linkaddr_t *from)
 static const struct broadcast_callbacks broadcast_call = {broadcast_recv};
 static struct broadcast_conn broadcast;
 /*---------------------------------------------------------------------------*/
-char sender_scheduler(struct rtimer *t, void *ptr) {
+char sender_scheduler(struct rtimer *t, void *ptr)
+{
   static uint16_t i = 0;
   PT_BEGIN(&pt);
 
   curr_timestamp = clock_time();
   printf("Start clock %lu ticks, timestamp %3lu.%03lu\n",
-    curr_timestamp,
-    curr_timestamp / CLOCK_SECOND,
-    ((curr_timestamp % CLOCK_SECOND)*1000) / CLOCK_SECOND);
+         curr_timestamp,
+         curr_timestamp / CLOCK_SECOND,
+         ((curr_timestamp % CLOCK_SECOND) * 1000) / CLOCK_SECOND);
 
-  while(1) {
+  while (1)
+  {
     // radio on
     NETSTACK_RADIO.on();
-    if (currRow == row || currCol == col) {
+    if (currRow == row || currCol == col)
+    {
       check_for_absence(curr_timestamp / CLOCK_SECOND);
-      for(i = 0; i < NUM_SEND; i++) {
+      for (i = 0; i < NUM_SEND; i++)
+      {
         leds_on(LEDS_RED);
-        
+
         data_packet.seq++;
         curr_timestamp = clock_time();
         data_packet.timestamp = curr_timestamp;
@@ -222,18 +250,20 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
         broadcast_send(&broadcast);
         leds_off(LEDS_RED);
 
-        if(i != (NUM_SEND - 1)) {
+        if (i != (NUM_SEND - 1))
+        {
           rtimer_set(
-            t,
-            RTIMER_TIME(t) + TIME_SLOT,
-            1,
-            (rtimer_callback_t)sender_scheduler,
-            ptr);
+              t,
+              RTIMER_TIME(t) + TIME_SLOT,
+              1,
+              (rtimer_callback_t)sender_scheduler,
+              ptr);
           PT_YIELD(&pt);
         }
       }
     }
-    else {
+    else
+    {
       leds_on(LEDS_BLUE);
       // radio off
       NETSTACK_RADIO.off();
@@ -241,11 +271,12 @@ char sender_scheduler(struct rtimer *t, void *ptr) {
       PT_YIELD(&pt);
       leds_off(LEDS_BLUE);
     }
-      
+
     currCol = (currCol + 1) % N_SIZE;
-    if (currCol == 0) currRow = (currRow + 1) % N_SIZE;
+    if (currCol == 0)
+      currRow = (currRow + 1) % N_SIZE;
   }
-  
+
   PT_END(&pt);
 }
 /*---------------------------------------------------------------------------*/
@@ -260,21 +291,21 @@ PROCESS_THREAD(cc2650_nbr_discovery_process, ev, data)
   row = random_rand() % N_SIZE;
   col = random_rand() % N_SIZE;
 
-  #ifdef TMOTE_SKY
+#ifdef TMOTE_SKY
   powertrace_start(CLOCK_SECOND * 5);
-  #endif
+#endif
 
   broadcast_open(&broadcast, 129, &broadcast_call);
 
-  // for serial port
-  #if !WITH_UIP && !WITH_UIP6
+// for serial port
+#if !WITH_UIP && !WITH_UIP6
   uart1_set_input(serial_line_input_byte);
   serial_line_init();
-  #endif
+#endif
 
   printf("CC2650 neighbour discovery\n");
   // printf("Node %d will be sending packet of size %d Bytes\n",
-    // node_id, (int)sizeof(data_packet_struct));
+  // node_id, (int)sizeof(data_packet_struct));
   // printf("N_SIZE: %d row: %d col: %d\n", N_SIZE, row, col);
   // radio off
   NETSTACK_RADIO.off();
