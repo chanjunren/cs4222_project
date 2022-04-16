@@ -102,8 +102,7 @@ void process_node(int id, unsigned long curr_timestamp, signed short rssi)
     // Updating last timestamp if node is currently connected
     if (ptr->id == id)
     {
-      printf("Node %d: | is_printed: %d | timestamp: %ld\n\n",
-        id, ptr->is_printed, ptr->timestamp);
+      ptr->last_pkt_recv_timestamp = curr_timestamp;
       if (rssi < RSSI_THRESHOLD) {
         if (ptr->in_proximity) {
           if ((curr_timestamp - ptr->timestamp) > MIN_CONTACT && !ptr->is_printed)
@@ -144,7 +143,7 @@ void check_for_absence(unsigned long curr_timestamp)
   device_node ptr = head, prev = NULL;
   while (ptr != NULL)
   {
-    if (ptr->is_printed && !ptr->in_proximity && (curr_timestamp - ptr->timestamp > ABSENT_LIMIT))
+    if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT))
     {
       printf("%ld ABSENT2 %d\n", ptr->timestamp, ptr->id);
       remove_node(prev, ptr);

@@ -13,9 +13,8 @@ typedef struct {
 
 struct device_info {
     int id;
-    unsigned long timestamp; // timestamp of last received packet 
-    unsigned long first_close_prox_timestamp; // timestamp of first received packet in proximity
-    unsigned long first_out_of_prox_timestamp; // timestamp of first received packet in proximity
+    unsigned long timestamp;
+    unsigned long last_pkt_recv_timestamp;
     bool in_proximity;
     bool is_printed;
     struct device_info *next;
