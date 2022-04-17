@@ -199,7 +199,7 @@ void check_for_absence(unsigned long curr_timestamp)
   {
     if (ptr->is_printed && (curr_timestamp - ptr->last_pkt_recv_timestamp > ABSENT_LIMIT + 4))
     {
-      printf("%ld ABSENT %d\n", ptr->timestamp, ptr->id);
+      printf("%ld ABSENT %d\n", curr_timestamp, ptr->id);
       remove_node(prev, ptr);
     }
     prev = ptr;
