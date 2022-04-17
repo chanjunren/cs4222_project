@@ -2,7 +2,6 @@ obj_srf06-cc26xx
 contiki-srf06-cc26xx.a
 trace_together_quorum-srf06-cc26xx.map
 trace_together_quorum.elf
-trace_together_quorum.sky
 contiki-sky.a
 contiki-sky.map
 obj_sky/
